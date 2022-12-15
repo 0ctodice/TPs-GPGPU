@@ -18,12 +18,12 @@ namespace IMAC
 		int x = (blockIdx.x * blockDim.x) + threadIdx.x;
 		int y = (blockIdx.y * blockDim.y) + threadIdx.y;
 
-		int id = x + y * width;
-
-		if (id >= width * height)
+		if (x >= width || y >= height)
 		{
 			return;
 		}
+
+		int id = x + y * width;
 
 		dev_output[3 * id + 0] = static_cast<uchar>(fminf(255.f, (dev_input[3 * id] * 0.393f + dev_input[3 * id + 1] * 0.769f + dev_input[3 * id + 2] * 0.189f)));
 		dev_output[3 * id + 1] = static_cast<uchar>(fminf(255.f, (dev_input[3 * id] * 0.349f + dev_input[3 * id + 1] * 0.686f + dev_input[3 * id + 2] * 0.168f)));

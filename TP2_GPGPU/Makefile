@@ -7,7 +7,7 @@
 BIN=convolution
 # FLAG
 FLAGS=-Wall -O3
-FLAGS_NVCC=-gencode=arch=compute_61,code=sm_61
+FLAGS_NVCC=-gencode=arch=compute_86,code=sm_86
 
 # INCLUDES
 INC=-I./include -I/usr/local/cuda/include

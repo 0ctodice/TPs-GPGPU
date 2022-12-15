@@ -17,12 +17,12 @@ namespace IMAC
 		int x = (blockIdx.x * blockDim.x) + threadIdx.x;
 		int y = (blockIdx.y * blockDim.y) + threadIdx.y;
 
-		int id = x + y * width;
-
-		if (id >= width * height)
+		if (x >= width || y >= height)
 		{
 			return;
 		}
+
+		int id = x + y * width;
 
 		dev_output[id] = dev_inputA[id] + dev_inputB[id];
 	}
