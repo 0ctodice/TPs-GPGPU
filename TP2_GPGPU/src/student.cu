@@ -53,7 +53,7 @@ namespace IMAC
 	}
 	// ==================================================
 
-	__constant__ float KERNEL[100];
+	__constant__ float KERNEL[2048];
 
 	texture<uchar4, 1, cudaReadModeElementType> image_source;
 
@@ -75,18 +75,22 @@ namespace IMAC
 
 		int offset = matSize / 2;
 
-		for (int j = -offset; j <= offset; j++)
+		int j, i, kY, kX, tmpX, tmpY, id;
+		float kernel;
+		uchar4 pix;
+
+		for (j = -offset; j <= offset; j++)
 		{
-			int kY = j + offset;
-			for (int i = -offset; i <= offset; i++)
+			kY = j + offset;
+			for (i = -offset; i <= offset; i++)
 			{
-				int kX = i + offset;
-				float kernel = KERNEL[kX + kY * matSize];
+				kX = i + offset;
+				kernel = KERNEL[kX + kY * matSize];
 
-				int tmpX = max(0, min(imgWidth - 1, x + i));
-				int tmpY = max(0, min(imgHeight - 1, y + j));
+				tmpX = max(0, min(imgWidth - 1, x + i));
+				tmpY = max(0, min(imgHeight - 1, y + j));
 
-				uchar4 pix = tex2D(image_source2D, tmpX, tmpY);
+				pix = tex2D(image_source2D, tmpX, tmpY);
 
 				r += kernel * static_cast<float>(pix.x);
 				g += kernel * static_cast<float>(pix.y);
@@ -98,7 +102,7 @@ namespace IMAC
 		g = max(0.f, min(255.f, g));
 		b = max(0.f, min(255.f, b));
 
-		int id = x + y * imgWidth;
+		id = x + y * imgWidth;
 
 		dev_image_output[id].x = r;
 		dev_image_output[id].y = g;
