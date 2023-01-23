@@ -273,17 +273,8 @@ namespace IMAC
 
 		int threads_size = 32;
 
-		auto init_width = imgWidth / threads_size;
-		auto init_height = imgHeight / threads_size;
-
-		auto log_width = log2(init_width);
-		auto log_height = log2(init_height);
-
-		auto block_width = ceil(log_width) == floor(log_width) ? init_width : init_width + 1;
-		auto block_height = ceil(log_height) == floor(log_height) ? init_height : init_height + 1;
-
-		dim3 block_size = dim3(block_width, block_height, 1);
 		dim3 nb_threads = dim3(threads_size, threads_size, 1);
+		dim3 block_size = dim3((size + nb_threads.x - 1) / nb_threads.x, (size + nb_threads.y - 1) / nb_threads.y, 1);
 
 		cudaMalloc((void **)&dev_image_output, bytes);
 
