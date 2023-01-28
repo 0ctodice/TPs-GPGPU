@@ -61,196 +61,188 @@ namespace IMAC
 
 	__global__ void convText2DCUDA(const int imgWidth, const int imgHeight, const int matSize, uchar4 *const dev_image_output)
 	{
-		int x = (blockIdx.x * blockDim.x) + threadIdx.x;
-		int y = (blockIdx.y * blockDim.y) + threadIdx.y;
-
-		if (x >= imgWidth || y >= imgHeight)
+		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.x * blockDim.x)
 		{
-			return;
-		}
-
-		float r = 0.f;
-		float g = 0.f;
-		float b = 0.f;
-
-		int offset = matSize / 2;
-
-		int j, i, kY, kX, tmpX, tmpY, id;
-		float kernel;
-		uchar4 pix;
-
-		for (j = -offset; j <= offset; j++)
-		{
-			kY = j + offset;
-			for (i = -offset; i <= offset; i++)
+			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.y * blockDim.y)
 			{
-				kX = i + offset;
-				kernel = KERNEL[kX + kY * matSize];
+				float r = 0.f;
+				float g = 0.f;
+				float b = 0.f;
 
-				tmpX = max(0, min(imgWidth - 1, x + i));
-				tmpY = max(0, min(imgHeight - 1, y + j));
+				int offset = matSize / 2;
 
-				pix = tex2D(image_source2D, tmpX, tmpY);
+				int j, i, kY, kX, tmpX, tmpY, id;
+				float kernel;
+				uchar4 pix;
 
-				r += kernel * static_cast<float>(pix.x);
-				g += kernel * static_cast<float>(pix.y);
-				b += kernel * static_cast<float>(pix.z);
+				for (j = -offset; j <= offset; j++)
+				{
+					kY = j + offset;
+					for (i = -offset; i <= offset; i++)
+					{
+						kX = i + offset;
+						kernel = KERNEL[kX + kY * matSize];
+
+						tmpX = max(0, min(imgWidth - 1, x + i));
+						tmpY = max(0, min(imgHeight - 1, y + j));
+
+						pix = tex2D(image_source2D, tmpX, tmpY);
+
+						r += kernel * static_cast<float>(pix.x);
+						g += kernel * static_cast<float>(pix.y);
+						b += kernel * static_cast<float>(pix.z);
+					}
+				}
+
+				r = max(0.f, min(255.f, r));
+				g = max(0.f, min(255.f, g));
+				b = max(0.f, min(255.f, b));
+
+				id = x + y * imgWidth;
+
+				dev_image_output[id].x = r;
+				dev_image_output[id].y = g;
+				dev_image_output[id].z = b;
+				dev_image_output[id].w = 255;
 			}
 		}
-
-		r = max(0.f, min(255.f, r));
-		g = max(0.f, min(255.f, g));
-		b = max(0.f, min(255.f, b));
-
-		id = x + y * imgWidth;
-
-		dev_image_output[id].x = r;
-		dev_image_output[id].y = g;
-		dev_image_output[id].z = b;
-		dev_image_output[id].w = 255;
 	}
 
 	__global__ void convText1DCUDA(const int imgWidth, const int imgHeight, const int matSize, uchar4 *const dev_image_output)
 	{
-		int x = (blockIdx.x * blockDim.x) + threadIdx.x;
-		int y = (blockIdx.y * blockDim.y) + threadIdx.y;
-
-		if (x >= imgWidth || y >= imgHeight)
+		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.x * blockDim.x)
 		{
-			return;
-		}
-
-		float r = 0.f;
-		float g = 0.f;
-		float b = 0.f;
-
-		int offset = matSize / 2;
-
-		for (int j = -offset; j <= offset; j++)
-		{
-			int kY = j + offset;
-			for (int i = -offset; i <= offset; i++)
+			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.y * blockDim.y)
 			{
-				int kX = i + offset;
-				float kernel = KERNEL[kX + kY * matSize];
+				float r = 0.f;
+				float g = 0.f;
+				float b = 0.f;
 
-				int tmpX = max(0, min(imgWidth - 1, x + i));
-				int tmpY = max(0, min(imgHeight - 1, y + j));
+				int offset = matSize / 2;
 
-				int tmpId = tmpX + tmpY * imgWidth;
+				for (int j = -offset; j <= offset; j++)
+				{
+					int kY = j + offset;
+					for (int i = -offset; i <= offset; i++)
+					{
+						int kX = i + offset;
+						float kernel = KERNEL[kX + kY * matSize];
 
-				uchar4 pix = tex1Dfetch(image_source, tmpId);
+						int tmpX = max(0, min(imgWidth - 1, x + i));
+						int tmpY = max(0, min(imgHeight - 1, y + j));
 
-				r += kernel * static_cast<float>(pix.x);
-				g += kernel * static_cast<float>(pix.y);
-				b += kernel * static_cast<float>(pix.z);
+						int tmpId = tmpX + tmpY * imgWidth;
+
+						uchar4 pix = tex1Dfetch(image_source, tmpId);
+
+						r += kernel * static_cast<float>(pix.x);
+						g += kernel * static_cast<float>(pix.y);
+						b += kernel * static_cast<float>(pix.z);
+					}
+				}
+
+				r = max(0.f, min(255.f, r));
+				g = max(0.f, min(255.f, g));
+				b = max(0.f, min(255.f, b));
+
+				int id = x + y * imgWidth;
+
+				dev_image_output[id].x = r;
+				dev_image_output[id].y = g;
+				dev_image_output[id].z = b;
+				dev_image_output[id].w = 255;
 			}
 		}
-
-		r = max(0.f, min(255.f, r));
-		g = max(0.f, min(255.f, g));
-		b = max(0.f, min(255.f, b));
-
-		int id = x + y * imgWidth;
-
-		dev_image_output[id].x = r;
-		dev_image_output[id].y = g;
-		dev_image_output[id].z = b;
-		dev_image_output[id].w = 255;
 	}
 
 	__global__ void convConstCUDA(const int imgWidth, const int imgHeight, const int matSize, const uchar4 *const dev_image_input, uchar4 *const dev_image_output)
 	{
-		int x = (blockIdx.x * blockDim.x) + threadIdx.x;
-		int y = (blockIdx.y * blockDim.y) + threadIdx.y;
-
-		if (x >= imgWidth || y >= imgHeight)
+		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.x * blockDim.x)
 		{
-			return;
-		}
-
-		float r = 0.f;
-		float g = 0.f;
-		float b = 0.f;
-
-		int offset = matSize / 2;
-
-		for (int j = -offset; j <= offset; j++)
-		{
-			int kY = j + offset;
-			for (int i = -offset; i <= offset; i++)
+			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.y * blockDim.y)
 			{
-				int kX = i + offset;
-				float kernel = KERNEL[kX + kY * matSize];
+				float r = 0.f;
+				float g = 0.f;
+				float b = 0.f;
 
-				int tmpX = max(0, min(imgWidth - 1, x + i));
-				int tmpY = max(0, min(imgHeight - 1, y + j));
+				int offset = matSize / 2;
 
-				int tmpId = tmpX + tmpY * imgWidth;
+				for (int j = -offset; j <= offset; j++)
+				{
+					int kY = j + offset;
+					for (int i = -offset; i <= offset; i++)
+					{
+						int kX = i + offset;
+						float kernel = KERNEL[kX + kY * matSize];
 
-				r += kernel * static_cast<float>(dev_image_input[tmpId].x);
-				g += kernel * static_cast<float>(dev_image_input[tmpId].y);
-				b += kernel * static_cast<float>(dev_image_input[tmpId].z);
+						int tmpX = max(0, min(imgWidth - 1, x + i));
+						int tmpY = max(0, min(imgHeight - 1, y + j));
+
+						int tmpId = tmpX + tmpY * imgWidth;
+
+						r += kernel * static_cast<float>(dev_image_input[tmpId].x);
+						g += kernel * static_cast<float>(dev_image_input[tmpId].y);
+						b += kernel * static_cast<float>(dev_image_input[tmpId].z);
+					}
+				}
+
+				r = max(0.f, min(255.f, r));
+				g = max(0.f, min(255.f, g));
+				b = max(0.f, min(255.f, b));
+
+				int id = x + y * imgWidth;
+
+				dev_image_output[id].x = r;
+				dev_image_output[id].y = g;
+				dev_image_output[id].z = b;
+				dev_image_output[id].w = 255;
 			}
 		}
-
-		r = max(0.f, min(255.f, r));
-		g = max(0.f, min(255.f, g));
-		b = max(0.f, min(255.f, b));
-
-		int id = x + y * imgWidth;
-
-		dev_image_output[id].x = r;
-		dev_image_output[id].y = g;
-		dev_image_output[id].z = b;
-		dev_image_output[id].w = 255;
 	}
 
 	__global__ void convNaifCUDA(const int imgWidth, const int imgHeight, const int matSize, const uchar4 *const dev_image_input, uchar4 *const dev_image_output, const float *const matConv)
 	{
-		int x = (blockIdx.x * blockDim.x) + threadIdx.x;
-		int y = (blockIdx.y * blockDim.y) + threadIdx.y;
-
-		if (x >= imgWidth || y >= imgHeight)
+		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.x * blockDim.x)
 		{
-			return;
-		}
-
-		float r = 0.f;
-		float g = 0.f;
-		float b = 0.f;
-
-		int offset = matSize / 2;
-
-		for (int j = -offset; j <= offset; j++)
-		{
-			int kY = j + offset;
-			for (int i = -offset; i <= offset; i++)
+			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.y * blockDim.y)
 			{
-				int kX = i + offset;
-				float kernel = matConv[kX + kY * matSize];
+				float r = 0.f;
+				float g = 0.f;
+				float b = 0.f;
 
-				int tmpX = max(0, min(imgWidth - 1, x + i));
-				int tmpY = max(0, min(imgHeight - 1, y + j));
+				int offset = matSize / 2;
 
-				int tmpId = tmpX + tmpY * imgWidth;
+				for (int j = -offset; j <= offset; j++)
+				{
+					int kY = j + offset;
+					for (int i = -offset; i <= offset; i++)
+					{
+						int kX = i + offset;
+						float kernel = matConv[kX + kY * matSize];
 
-				r += kernel * static_cast<float>(dev_image_input[tmpId].x);
-				g += kernel * static_cast<float>(dev_image_input[tmpId].y);
-				b += kernel * static_cast<float>(dev_image_input[tmpId].z);
+						int tmpX = max(0, min(imgWidth - 1, x + i));
+						int tmpY = max(0, min(imgHeight - 1, y + j));
+
+						int tmpId = tmpX + tmpY * imgWidth;
+
+						r += kernel * static_cast<float>(dev_image_input[tmpId].x);
+						g += kernel * static_cast<float>(dev_image_input[tmpId].y);
+						b += kernel * static_cast<float>(dev_image_input[tmpId].z);
+					}
+				}
+
+				r = max(0.f, min(255.f, r));
+				g = max(0.f, min(255.f, g));
+				b = max(0.f, min(255.f, b));
+
+				int id = x + y * imgWidth;
+
+				dev_image_output[id].x = r;
+				dev_image_output[id].y = g;
+				dev_image_output[id].z = b;
+				dev_image_output[id].w = 255;
 			}
 		}
-
-		r = max(0.f, min(255.f, r));
-		g = max(0.f, min(255.f, g));
-		b = max(0.f, min(255.f, b));
-
-		int id = x + y * imgWidth;
-
-		dev_image_output[id].x = r;
-		dev_image_output[id].y = g;
-		dev_image_output[id].z = b;
-		dev_image_output[id].w = 255;
 	}
 
 	void studentJob(const std::vector<uchar4> &inputImg,	   // Input image
@@ -274,7 +266,7 @@ namespace IMAC
 		int threads_size = 32;
 
 		dim3 nb_threads = dim3(threads_size, threads_size, 1);
-		dim3 block_size = dim3((size + nb_threads.x - 1) / nb_threads.x, (size + nb_threads.y - 1) / nb_threads.y, 1);
+		dim3 block_size = dim3((imgWidth + nb_threads.x - 1) / nb_threads.x, (imgHeight + nb_threads.y - 1) / nb_threads.y, 1);
 
 		cudaMalloc((void **)&dev_image_output, bytes);
 
@@ -304,8 +296,8 @@ namespace IMAC
 		// cudaUnbindTexture(image_source);
 
 		// ================================================== PARTIE TEXTURE 2D
-		size_t dev_pitch;
 
+		size_t dev_pitch;
 		cudaMallocPitch(&dev_image_input, &dev_pitch, imgWidth * sizeof(uchar4), imgHeight);
 		cudaMemcpy2D(dev_image_input, dev_pitch, &inputImg[0], imgWidth * sizeof(uchar4), imgWidth * sizeof(uchar4), imgHeight, cudaMemcpyHostToDevice);
 		cudaBindTexture2D(0, image_source2D, dev_image_input, imgWidth, imgHeight, dev_pitch);
