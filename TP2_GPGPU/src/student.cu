@@ -61,9 +61,9 @@ namespace IMAC
 
 	__global__ void convText2DCUDA(const int imgWidth, const int imgHeight, const int matSize, uchar4 *const dev_image_output)
 	{
-		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.x * blockDim.x)
+		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.y * blockDim.y)
 		{
-			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.y * blockDim.y)
+			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.x * blockDim.x)
 			{
 				float r = 0.f;
 				float g = 0.f;
@@ -110,9 +110,9 @@ namespace IMAC
 
 	__global__ void convText1DCUDA(const int imgWidth, const int imgHeight, const int matSize, uchar4 *const dev_image_output)
 	{
-		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.x * blockDim.x)
+		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.y * blockDim.y)
 		{
-			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.y * blockDim.y)
+			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.x * blockDim.x)
 			{
 				float r = 0.f;
 				float g = 0.f;
@@ -157,9 +157,9 @@ namespace IMAC
 
 	__global__ void convConstCUDA(const int imgWidth, const int imgHeight, const int matSize, const uchar4 *const dev_image_input, uchar4 *const dev_image_output)
 	{
-		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.x * blockDim.x)
+		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.y * blockDim.y)
 		{
-			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.y * blockDim.y)
+			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.x * blockDim.x)
 			{
 				float r = 0.f;
 				float g = 0.f;
@@ -202,9 +202,9 @@ namespace IMAC
 
 	__global__ void convNaifCUDA(const int imgWidth, const int imgHeight, const int matSize, const uchar4 *const dev_image_input, uchar4 *const dev_image_output, const float *const matConv)
 	{
-		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.x * blockDim.x)
+		for (int y = blockIdx.y * blockDim.y + threadIdx.y; y < imgHeight; y += gridDim.y * blockDim.y)
 		{
-			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.y * blockDim.y)
+			for (int x = threadIdx.x + blockIdx.x * blockDim.x; x < imgWidth; x += gridDim.x * blockDim.x)
 			{
 				float r = 0.f;
 				float g = 0.f;
