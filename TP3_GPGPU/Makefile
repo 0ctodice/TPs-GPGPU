@@ -7,7 +7,7 @@
 BIN=reduce
 # FLAG
 FLAGS=-Wall -O3
-FLAGS_NVCC=-gencode=arch=compute_50,code=sm_50
+FLAGS_NVCC=-gencode=arch=compute_86,code=sm_86
 # INCLUDES
 INC=-I./include -I/usr/local/cuda/include
 # SRC Directory
