@@ -40,6 +40,75 @@ namespace IMAC
 		}
 	}
 
+	// ==================================================== EX 2
+	__global__ void maxReduce_ex2(const uint *const dev_array, const uint size, uint *const dev_partialMax)
+	{
+		extern __shared__ uint sharedMemory[];
+
+		int idx = threadIdx.x;
+		int blx = blockIdx.x;
+		int myId = blx * blockDim.x + idx;
+
+		sharedMemory[idx] = myId < size ? dev_array[myId] : 0;
+
+		__syncthreads();
+
+		for (int i = (blockDim.x / 2); i > 0; i /= 2)
+		{
+			if (idx < i)
+			{
+				uint maxShared = umax(sharedMemory[idx], sharedMemory[idx + i]);
+				sharedMemory[idx] = maxShared;
+			}
+			__syncthreads();
+		}
+		if (idx == 0)
+		{
+			dev_partialMax[blx] = sharedMemory[0];
+		}
+	}
+
+	// ==================================================== EX 3
+	__global__ void maxReduce_ex3(const uint *const dev_array, const uint size, uint *const dev_partialMax)
+	{
+		extern __shared__ uint sharedMemory[];
+
+		int idx = threadIdx.x;
+		int blx = blockIdx.x;
+		int myId = blx * blockDim.x + idx;
+
+		if (myId < size)
+		{
+			if (myId + blockDim.x / 2 < size)
+			{
+				sharedMemory[idx] = umax(dev_array[myId], dev_array[myId + blockDim.x / 2]);
+			}
+			else
+			{
+				sharedMemory[idx] = dev_array[myId];
+			}
+		}
+		else
+		{
+			sharedMemory[idx] = 0;
+		}
+
+		__syncthreads();
+
+		for (int i = (blockDim.x / 2); i > 0; i /= 2)
+		{
+			if (idx < i)
+			{
+				uint maxShared = umax(sharedMemory[idx], sharedMemory[idx + i]);
+				sharedMemory[idx] = maxShared;
+			}
+			__syncthreads();
+		}
+		if (idx == 0)
+		{
+			dev_partialMax[blx] = sharedMemory[0];
+		}
+	}
 	void studentJob(const std::vector<uint> &array, const uint resCPU /* Just for comparison */, const uint nbIterations)
 	{
 		uint *dev_array = NULL;

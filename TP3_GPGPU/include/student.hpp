@@ -32,6 +32,8 @@ namespace IMAC
 
 	// ==================================================== EX 1
 	__global__ void maxReduce_ex1(const uint *const dev_array, const uint size, uint *const dev_partialMax);
+	__global__ void maxReduce_ex2(const uint *const dev_array, const uint size, uint *const dev_partialMax);
+	__global__ void maxReduce_ex3(const uint *const dev_array, const uint size, uint *const dev_partialMax);
 
 	// return a uint2 with x: dimBlock / y: dimGrid
 	template <uint kernelType>
@@ -44,13 +46,17 @@ namespace IMAC
 		{
 		case KERNEL_EX1:
 			dimBlockGrid.x = sizeArray > MAX_NB_THREADS ? MAX_NB_THREADS : nextPow2(sizeArray);
-			dimBlockGrid.y = (sizeArray + MAX_NB_THREADS - 1) / MAX_NB_THREADS;
+			dimBlockGrid.y = sizeArray > MAX_NB_THREADS ? (sizeArray + MAX_NB_THREADS - 1) / MAX_NB_THREADS : 1;
 			break;
 		case KERNEL_EX2:
 			/// TODO EX 2
+			dimBlockGrid.x = sizeArray > MAX_NB_THREADS ? MAX_NB_THREADS : nextPow2(sizeArray);
+			dimBlockGrid.y = sizeArray > MAX_NB_THREADS ? (sizeArray + MAX_NB_THREADS - 1) / MAX_NB_THREADS : 1;
 			break;
 		case KERNEL_EX3:
 			/// TODO EX 3
+			dimBlockGrid.x = sizeArray > MAX_NB_THREADS ? MAX_NB_THREADS : nextPow2(sizeArray);
+			dimBlockGrid.y = sizeArray > MAX_NB_THREADS ? ((sizeArray + MAX_NB_THREADS - 1) / MAX_NB_THREADS) / 2 : 1;
 			break;
 		case KERNEL_EX4:
 			/// TODO EX 4
@@ -100,11 +106,13 @@ namespace IMAC
 				break;
 			case KERNEL_EX2:
 				/// TODO EX 2
-				std::cout << "Not implemented !" << std::endl;
+				maxReduce_ex2<<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+				// std::cout << "Not implemented !" << std::endl;
 				break;
 			case KERNEL_EX3:
 				/// TODO EX 3
-				std::cout << "Not implemented !" << std::endl;
+				maxReduce_ex3<<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+				// std::cout << "Not implemented !" << std::endl;
 				break;
 			case KERNEL_EX4:
 				/// TODO EX 4
