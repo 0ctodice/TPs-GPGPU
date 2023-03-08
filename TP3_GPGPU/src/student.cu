@@ -39,7 +39,6 @@ namespace IMAC
 			dev_partialMax[blx] = sharedMemory[0];
 		}
 	}
-
 	// ==================================================== EX 2
 	__global__ void maxReduce_ex2(const uint *const dev_array, const uint size, uint *const dev_partialMax)
 	{
@@ -62,12 +61,12 @@ namespace IMAC
 			}
 			__syncthreads();
 		}
+
 		if (idx == 0)
 		{
 			dev_partialMax[blx] = sharedMemory[0];
 		}
 	}
-
 	// ==================================================== EX 3
 	__global__ void maxReduce_ex3(const uint *const dev_array, const uint size, uint *const dev_partialMax)
 	{
@@ -75,13 +74,13 @@ namespace IMAC
 
 		int idx = threadIdx.x;
 		int blx = blockIdx.x;
-		int myId = blx * blockDim.x + idx;
+		int myId = blx * blockDim.x * 2 + idx;
 
 		if (myId < size)
 		{
 			if (myId + blockDim.x / 2 < size)
 			{
-				sharedMemory[idx] = umax(dev_array[myId], dev_array[myId + blockDim.x / 2]);
+				sharedMemory[idx] = umax(dev_array[myId], dev_array[myId + blockDim.x]);
 			}
 			else
 			{
@@ -104,11 +103,182 @@ namespace IMAC
 			}
 			__syncthreads();
 		}
+
 		if (idx == 0)
 		{
 			dev_partialMax[blx] = sharedMemory[0];
 		}
 	}
+	// ==================================================== EX 4
+	__global__ void maxReduce_ex4(const uint *const dev_array, const uint size, uint *const dev_partialMax)
+	{
+		extern __shared__ uint sharedMemory[];
+
+		int idx = threadIdx.x;
+		int blx = blockIdx.x;
+		int myId = blx * blockDim.x * 2 + idx;
+		int i = 0;
+
+		if (myId < size)
+		{
+			if (myId + blockDim.x / 2 < size)
+			{
+				sharedMemory[idx] = umax(dev_array[myId], dev_array[myId + blockDim.x]);
+			}
+			else
+			{
+				sharedMemory[idx] = dev_array[myId];
+			}
+		}
+		else
+		{
+			sharedMemory[idx] = 0;
+		}
+
+		__syncthreads();
+
+		for (i = (blockDim.x / 2); i > 0; i /= 2)
+		{
+			if (i < 32)
+			{
+				break;
+			}
+
+			if (idx < i)
+			{
+				uint maxShared = umax(sharedMemory[idx], sharedMemory[idx + i]);
+				sharedMemory[idx] = maxShared;
+			}
+			__syncthreads();
+		}
+
+		volatile uint *vsm = sharedMemory;
+
+		if (idx < i)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + i]);
+			i /= 2;
+		}
+		if (idx < i)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + i]);
+			i /= 2;
+		}
+		if (idx < i)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + i]);
+			i /= 2;
+		}
+		if (idx < i)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + i]);
+			i /= 2;
+		}
+		if (idx < i)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + i]);
+			i /= 2;
+		}
+		if (idx < i)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + i]);
+		}
+
+		if (idx == 0)
+		{
+			dev_partialMax[blx] = sharedMemory[0];
+		}
+	}
+	// ==================================================== EX 5
+	template <uint T>
+	__global__ void maxReduce_ex5(const uint *const dev_array, const uint size, uint *const dev_partialMax)
+	{
+		extern __shared__ uint sharedMemory[];
+
+		int idx = threadIdx.x;
+		int blx = blockIdx.x;
+		int myId = blx * blockDim.x * 2 + idx;
+
+		if (myId < size)
+		{
+			if (myId + blockDim.x / 2 < size)
+			{
+				sharedMemory[idx] = umax(dev_array[myId], dev_array[myId + blockDim.x]);
+			}
+			else
+			{
+				sharedMemory[idx] = dev_array[myId];
+			}
+		}
+		else
+		{
+			sharedMemory[idx] = 0;
+		}
+
+		__syncthreads();
+
+		volatile uint *vsm = sharedMemory;
+
+		if (T >= 1024u && idx < 512u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 512u]);
+			__syncthreads();
+		}
+
+		if (T >= 512u && idx < 256u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 256u]);
+			__syncthreads();
+		}
+
+		if (T >= 256u && idx < 128u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 128u]);
+			__syncthreads();
+		}
+
+		if (T >= 128u && idx < 64u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 64u]);
+			__syncthreads();
+		}
+
+		if (idx < 32u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 32u]);
+		}
+
+		if (idx < 16u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 16u]);
+		}
+
+		if (idx < 8u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 8u]);
+		}
+
+		if (idx < 4u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 4u]);
+		}
+
+		if (idx < 2u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 2u]);
+		}
+
+		if (idx < 1u)
+		{
+			vsm[idx] = umax(vsm[idx], vsm[idx + 1u]);
+		}
+
+		if (idx == 0)
+		{
+			dev_partialMax[blx] = sharedMemory[0];
+		}
+	}
+
 	void studentJob(const std::vector<uint> &array, const uint resCPU /* Just for comparison */, const uint nbIterations)
 	{
 		uint *dev_array = NULL;
@@ -172,8 +342,8 @@ namespace IMAC
 
 	void printTiming(const float2 timing)
 	{
-		std::cout << (timing.x < 1.f ? 1e3f * timing.x : timing.x) << " us on device and ";
-		std::cout << (timing.y < 1.f ? 1e3f * timing.y : timing.y) << " us on host." << std::endl;
+		std::cout << (timing.x < 1.f ? /*1e3f **/ timing.x : timing.x) << " us on device and ";
+		std::cout << (timing.y < 1.f ? /*1e3f **/ timing.y : timing.y) << " us on host." << std::endl;
 	}
 
 	void compare(const uint resGPU, const uint resCPU)

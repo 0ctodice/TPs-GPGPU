@@ -34,6 +34,9 @@ namespace IMAC
 	__global__ void maxReduce_ex1(const uint *const dev_array, const uint size, uint *const dev_partialMax);
 	__global__ void maxReduce_ex2(const uint *const dev_array, const uint size, uint *const dev_partialMax);
 	__global__ void maxReduce_ex3(const uint *const dev_array, const uint size, uint *const dev_partialMax);
+	__global__ void maxReduce_ex4(const uint *const dev_array, const uint size, uint *const dev_partialMax);
+	template <uint T>
+	__global__ void maxReduce_ex5(const uint *const dev_array, const uint size, uint *const dev_partialMax);
 
 	// return a uint2 with x: dimBlock / y: dimGrid
 	template <uint kernelType>
@@ -60,9 +63,13 @@ namespace IMAC
 			break;
 		case KERNEL_EX4:
 			/// TODO EX 4
+			dimBlockGrid.x = sizeArray > MAX_NB_THREADS ? MAX_NB_THREADS : nextPow2(sizeArray);
+			dimBlockGrid.y = sizeArray > MAX_NB_THREADS ? ((sizeArray + MAX_NB_THREADS - 1) / MAX_NB_THREADS) / 2 : 1;
 			break;
 		case KERNEL_EX5:
 			/// TODO EX 5
+			dimBlockGrid.x = sizeArray > MAX_NB_THREADS ? MAX_NB_THREADS : nextPow2(sizeArray);
+			dimBlockGrid.y = sizeArray > MAX_NB_THREADS ? ((sizeArray + MAX_NB_THREADS - 1) / MAX_NB_THREADS) / 2 : 1;
 			break;
 		default:
 			throw std::runtime_error("Error configureKernel: unknown kernel type");
@@ -116,11 +123,46 @@ namespace IMAC
 				break;
 			case KERNEL_EX4:
 				/// TODO EX 4
-				std::cout << "Not implemented !" << std::endl;
+				maxReduce_ex4<<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
 				break;
 			case KERNEL_EX5:
 				/// TODO EX 5
-				std::cout << "Not implemented !" << std::endl;
+				switch (dimBlockGrid.x)
+				{
+				case 1024:
+					maxReduce_ex5<1024><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 512:
+					maxReduce_ex5<512><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 256:
+					maxReduce_ex5<256><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 128:
+					maxReduce_ex5<128><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 64:
+					maxReduce_ex5<64><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 32:
+					maxReduce_ex5<32><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 16:
+					maxReduce_ex5<16><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 8:
+					maxReduce_ex5<8><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 4:
+					maxReduce_ex5<4><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 2:
+					maxReduce_ex5<2><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				case 1:
+					maxReduce_ex5<1><<<dimBlockGrid.y, dimBlockGrid.x, bytesSharedMem>>>(dev_array, size, dev_partialMax);
+					break;
+				}
 				break;
 			default:
 				cudaFree(dev_partialMax);
